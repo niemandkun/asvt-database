@@ -59,4 +59,7 @@ int map_put(Map *map, char *key, char *value);
  */
 char *map_get(Map *map, char *key);
 
+
+void map_print(Map *map);
+
 #endif

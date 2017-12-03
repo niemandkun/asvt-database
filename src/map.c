@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "map.h"
 
 Map *map_init(size_t size) {
@@ -40,6 +41,7 @@ int map_resize(Map *map, size_t size) {
     }
 
     map->entries = new_entries;
+    map->size = size;
 
     return 0;
 }
@@ -48,12 +50,8 @@ static int map_replace(Map *map, char *key, char *value) {
     for (size_t i = 0; i < map->count; ++i) {
         Entry *entry = &map->entries[i];
 
-        if (entry->key != NULL) {
-
-            if (entry->key == key || strcmp(key, entry->key) == 0) {
-                entry->value = value;
-            }
-
+        if (entry-> key != NULL && (entry->key == key || strcmp(key, entry->key) == 0)) {
+            entry->value = value;
             return 1;
         }
     }
@@ -97,7 +95,6 @@ int map_put(Map *map, char *key, char *value) {
 
 char *map_get(Map *map, char *key) {
     for (size_t i = 0; i < map->count; ++i) {
-
         Entry *entry = &map->entries[i];
 
         if (entry->key != NULL && strcmp(key, entry->key) == 0) {
@@ -106,4 +103,15 @@ char *map_get(Map *map, char *key) {
     }
 
     return NULL;
+}
+
+void map_print(Map *map) {
+    printf("Map {\n    size=%lu,\n    count=%lu,\n    entries=[\n", map->size, map->count);
+
+    for (size_t i = 0; i < map->count; ++i) {
+        Entry *entry = &map->entries[i];
+        printf("        Entry { key=\"%s\", value=\"%s\" },\n", entry->key, entry->value);
+    }
+
+    printf("    ],\n}\n");
 }
