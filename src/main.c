@@ -4,7 +4,7 @@
 #include "map.h"
 
 #define MAX_INPUT 1024
-#define MAX_TOKENS 2
+#define MAX_TOKENS 3
 
 size_t getinput(char *buffer, int max_len) {
     fgets(buffer, max_len, stdin);
@@ -61,19 +61,69 @@ size_t split_by_spaces(char* source, size_t source_size,
 }
 
 int perform_command(Map *map, size_t argc, char** argv) {
-    if (argc == 1) {
-        char* value = map_get(map, argv[0]);
-        if (value == NULL) {
-            printf("OUT: %s\n", "<No such key>");
-        } else {
-            printf("OUT: %s\n", value);
+    if (argc < 1) {
+        return ERRCODE;
+    }
+
+    if (strcmp(argv[0], "??") == 0) {
+        if (argc != 1) {
+            return ERRCODE;
+        }
+        printf("Help!\n");
+        return NOERROR;
+    }
+
+    if (strcmp(argv[0], "l") == 0) {
+        if (argc != 1) {
+            return ERRCODE;
+        }
+        for (size_t i = 0; i < map->count; ++i) {
+            Entry *entry = &map->entries[i];
+            printf("%s %s\n", entry->key, entry->value);
         }
         return NOERROR;
     }
 
-    if (argc == 2) {
-        map_put(map, argv[0], argv[1]);
+    if (strcmp(argv[0], "p") == 0) {
+        if (argc != 1) {
+            return ERRCODE;
+        }
         map_print(map);
+        return NOERROR;
+    }
+
+    if (strcmp(argv[0], "+") == 0) {
+        if (argc != 3) {
+            return ERRCODE;
+        }
+        map_put(map, argv[1], argv[2]);
+        return NOERROR;
+    }
+
+    if (strcmp(argv[0], "?") == 0) {
+        if (argc != 2) {
+            return ERRCODE;
+        }
+        char* value = map_get(map, argv[1]);
+        if (value != NULL) {
+            printf("%s\n", value);
+        }
+        return NOERROR;
+    }
+
+    if (strcmp(argv[0], "-") == 0) {
+        if (argc != 2) {
+            return ERRCODE;
+        }
+        map_remove(map, argv[1]);
+        return NOERROR;
+    }
+
+    if (strcmp(argv[0], "#") == 0) {
+        if (argc != 1) {
+            return ERRCODE;
+        }
+        printf("%lu\n", map->count);
         return NOERROR;
     }
 
@@ -94,7 +144,10 @@ int main(void) {
         }
 
         size_t tokens_count = split_by_spaces(input, input_size, tokens, MAX_TOKENS);
-        perform_command(map, tokens_count, tokens);
+
+        if (perform_command(map, tokens_count, tokens) != NOERROR) {
+            printf("Error!\n");
+        }
     }
 
     map_free(map);

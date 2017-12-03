@@ -60,6 +60,15 @@ int map_put(Map *map, char *key, char *value);
 char *map_get(Map *map, char *key);
 
 
+/**
+ * Removes key from a given Map.
+ */
+void map_remove(Map *map, char *key);
+
+
+/**
+ * Prints a given Map into STDIN, fancy.
+ */
 void map_print(Map *map);
 
 #endif

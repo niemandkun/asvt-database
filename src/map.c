@@ -46,24 +46,33 @@ int map_resize(Map *map, size_t size) {
     return 0;
 }
 
-static int map_replace(Map *map, char *key, char *value) {
-    for (size_t i = 0; i < map->count; ++i) {
-        Entry *entry = &map->entries[i];
+static int has_key(Entry *entry, char *key) {
+    return entry-> key != NULL
+        && (entry->key == key || strcmp(key, entry->key) == 0);
+}
 
-        if (entry-> key != NULL && (entry->key == key || strcmp(key, entry->key) == 0)) {
-            entry->value = value;
-            return 1;
+static int find_entry_by_key(Entry *entries, size_t count, char *key) {
+    for (size_t i = 0; i < count; ++i) {
+        if (has_key(&entries[i], key)) {
+            return i;
         }
     }
+    return -1;
+}
 
+static int map_replace(Map *map, char *key, char *value) {
+    int i = find_entry_by_key(map->entries, map->count, key);
+    if (i >= 0) {
+        Entry *entry = &map->entries[i];
+        entry->value = value;
+        return 1;
+    }
     return 0;
 }
 
 static int map_put_new(Map *map, char *key, char *value) {
     if (map->count == map->size) {
-
         int errcode = map_resize(map, 2 * map->size);
-
         if (errcode != NOERROR) {
             return 0;
         }
@@ -94,15 +103,35 @@ int map_put(Map *map, char *key, char *value) {
 }
 
 char *map_get(Map *map, char *key) {
-    for (size_t i = 0; i < map->count; ++i) {
+    int i = find_entry_by_key(map->entries, map->count, key);
+    if (i >= 0) {
         Entry *entry = &map->entries[i];
+        return entry->value;
+    }
+    return NULL;
+}
 
-        if (entry->key != NULL && strcmp(key, entry->key) == 0) {
-            return entry->value;
-        }
+void map_remove(Map *map, char *key) {
+    int i = find_entry_by_key(map->entries, map->count, key);
+
+    if (i < 0) {
+        return;
     }
 
-    return NULL;
+    Entry *entry = &map->entries[i];
+
+    free(entry->key);
+    free(entry->value);
+
+    size_t j = i;
+
+    while (j < map->count) {
+        map->entries[j] = map->entries[j + 1];
+        j++;
+    }
+
+    map->entries[j].key = NULL;
+    map->entries[j].value = NULL;
 }
 
 void map_print(Map *map) {
