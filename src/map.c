@@ -40,6 +40,8 @@ int map_resize(Map *map, size_t size) {
         new_entries[i] = map->entries[i];
     }
 
+    free(map->entries);
+
     map->entries = new_entries;
     map->size = size;
 
@@ -57,7 +59,7 @@ static int find_entry_by_key(Entry *entries, size_t count, char *key) {
             return i;
         }
     }
-    return -1;
+    return ERRCODE;
 }
 
 static int map_replace(Map *map, char *key, char *value) {
@@ -65,16 +67,16 @@ static int map_replace(Map *map, char *key, char *value) {
     if (i >= 0) {
         Entry *entry = &map->entries[i];
         entry->value = value;
-        return 1;
+        return NOERROR;
     }
-    return 0;
+    return ERRCODE;
 }
 
 static int map_put_new(Map *map, char *key, char *value) {
     if (map->count == map->size) {
         int errcode = map_resize(map, 2 * map->size);
         if (errcode != NOERROR) {
-            return 0;
+            return errcode;
         }
     }
 
@@ -83,7 +85,7 @@ static int map_put_new(Map *map, char *key, char *value) {
     entry->key = key;
     entry->value = value;
 
-    return 1;
+    return NOERROR;
 }
 
 int map_put(Map *map, char *key, char *value) {
@@ -91,11 +93,11 @@ int map_put(Map *map, char *key, char *value) {
         return ERRCODE;
     }
 
-    if (map_replace(map, key, value)) {
+    if (!map_replace(map, key, value)) {
         return NOERROR;
     }
 
-    if (map_put_new(map, key, value)) {
+    if (!map_put_new(map, key, value)) {
         return NOERROR;
     }
 
@@ -132,7 +134,7 @@ void map_remove(Map *map, char *key) {
 
     map->entries[j].key = NULL;
     map->entries[j].value = NULL;
-    
+
     map->count--;
 }
 
