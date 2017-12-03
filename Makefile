@@ -6,7 +6,7 @@ APP             := app
 APP_DEPS        := map.o api.o main.o
 
 SERVER          := server
-SERVER_DEPS     := socklib.o server.o
+SERVER_DEPS     := socklib.o server.o client.o
 
 CFLAGS          := -Wall -Wextra -Werror -pedantic -std=c99
 IFLAGS          := -I./$(INCLUDE_DIR)/
