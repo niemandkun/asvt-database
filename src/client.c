@@ -6,8 +6,9 @@
 #include "utils.h"
 
 #define MAX_INPUT 1024
-#define MAX_OUTPUT MAX_INPUT
-#define MAX_TOKENS 3
+#define MAX_FILE 1024
+#define MAX_OUTPUT 1024
+#define MAX_TOKENS 4
 
 #define ERRCODE -1
 #define NOERROR 0
@@ -48,22 +49,6 @@ Command *convert_to_command(size_t argc, char** argv) {
     return command;
 }
 
-int perform_locally(size_t argc, char** argv) {
-    if (argc < 1) {
-        return ERRCODE;
-    }
-
-    if (strcmp(argv[0], "??") == 0) {
-        if (argc != 1) {
-            return ERRCODE;
-        }
-        printf("Help!\n");
-        return NOERROR;
-    }
-
-    return ERRCODE;
-}
-
 int perform_remotely(size_t argc, char **argv) {
     Command *command = convert_to_command(argc, argv);
 
@@ -79,6 +64,59 @@ int perform_remotely(size_t argc, char **argv) {
     }
 
     return NOERROR;
+}
+
+int perform_locally(size_t argc, char** argv) {
+    if (argc < 1) {
+        return ERRCODE;
+    }
+
+    char *command = argv[0];
+
+    if (strcmp(command, "??") == 0) {
+        if (argc != 1) {
+            return ERRCODE;
+        }
+
+        printf("Available commands:\n");
+        printf("??              show this help message\n");
+        printf("l               list all keys\n");
+        printf("+ KEY VALUE     store key and value on server\n");
+        printf("+ FILE          store content of file on server\n");
+        printf("? KEY           lookup key\n");
+        printf("- KEY           remove key\n");
+        printf("#               print number of keys on server\n");
+
+        return NOERROR;
+    }
+
+    if (strcmp(command, "+") == 0 && argc == 2) {
+        char *filename = argv[1];
+
+        int file = open(filename, O_RDWR);
+        if (file == -1) {
+            return ERRCODE;
+        }
+
+        char *content = malloc(MAX_FILE);
+        if (content == NULL) {
+            return ERRCODE;
+        }
+
+        read(file, content, MAX_FILE);
+        close(file);
+
+        char *fake_argv[3];
+        fake_argv[0] = command;
+        fake_argv[1] = filename;
+        fake_argv[2] = content;
+
+        perform_remotely(3, fake_argv);
+        free(content);
+        return NOERROR;
+    }
+
+    return ERRCODE;
 }
 
 SOCKET init_socket(char* host, uint16_t port) {
