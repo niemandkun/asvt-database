@@ -1,6 +1,8 @@
 #ifndef CLIENT_H_
 #define CLIENT_H_
 
+#include <stdlib.h>
+
 #include "socklib.h"
 
 

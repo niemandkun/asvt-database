@@ -2,19 +2,43 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
 
 #include "sockheaders.h"
 #include "socklib.h"
 #include "client.h"
+#include "api.h"
 
 
 #define MAX_CLIENTS 128
 #define BUFFER_SIZE 1024
 
-
 #define STDIN  0
 #define STDOUT 1
 #define STDERR 2
+
+
+Command *parse_command(char *buffer, int read_pos, int nread, int bufer_size) {
+    uint8_t *data = (uint8_t *) buffer + read_pos;
+
+    if (read_pos > nread && read_pos > bufer_size)
+        return NULL;
+
+    uint8_t nblocks = *(data + 1);
+
+    uint32_t total_size = 2;
+    for (int i = 0; i < nblocks; ++i) {
+        uint32_t block_size = ntohl( * (uint32_t *) (data + total_size) );
+        total_size += block_size + sizeof(uint32_t);
+    }
+
+    Command *cmd = malloc(total_size);
+    memcpy(cmd, data, total_size);
+
+    return cmd;
+}
+
 
 void handle_client(client_t *client) {
     int nrecvd = tcp_recv(client->socket, client->env, client->env_size);
@@ -30,10 +54,26 @@ void handle_client(client_t *client) {
         return;
     }
 
-    fprintf(stdout, "%d: ", (int) client->socket);
+    int cmd_pos = 0;
+
+    Command *cmd = parse_command(client->env, cmd_pos, nrecvd, client->env_size);
+    Field *fields = (void *) cmd->fields;
+    
+    char *fmt = "%d: Command: %x of %x fields < | ";
+    fprintf(stdout, fmt, (int) client->socket, cmd->id, cmd->nfields);
     fflush (stdout);
-    write  (STDOUT, client->env, nrecvd);
-    fprintf(stdout, "\n");
+
+    for (int i = 0; i < cmd->nfields; ++i) {
+
+        void *data = (*fields).data;
+        uint32_t length = ntohl((*fields).length);
+        write(STDOUT, data, length);
+        write(STDOUT, " | ", 3);
+
+        fields = (void *) ((char *) fields + length + sizeof(length));
+    }
+
+    fprintf(stdout, "> \n");
     return;
 }
 
@@ -47,6 +87,7 @@ int main(int argc, char *argv[]) {
 
     char *host = argv[1];
     int   port = atoi(argv[2]);
+
 
     startup();
 
