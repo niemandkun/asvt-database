@@ -5,35 +5,36 @@
 
 #include "sockheaders.h"
 #include "socklib.h"
+#include "client.h"
 
 
 #define MAX_CLIENTS 128
-#define BUFFER_SIZE 512
+#define BUFFER_SIZE 1024
 
 
 #define STDIN  0
 #define STDOUT 1
 #define STDERR 2
 
-SOCKET handle_client(SOCKET client, char* buffer) {
-    int nrecvd = tcp_recv(client, buffer, BUFFER_SIZE);
+void handle_client(client_t *client) {
+    int nrecvd = tcp_recv(client->socket, client->env, client->env_size);
     if (nrecvd <= 0) {
 
         if (-nrecvd == WSAEWOULDBLOCK) {
             // data unavailable
-            return client;
+            return;
         }
 
-        fprintf(stderr, "Client %d disconnected\n", (int) client);
-        close(client);
-        return INVALID_SOCKET;
+        fprintf(stderr, "Client %d disconnected\n", (int) client->socket);
+        c_free(client);
+        return;
     }
 
-    fprintf(stdout, "%d: ", (int) client);
+    fprintf(stdout, "%d: ", (int) client->socket);
     fflush (stdout);
-    write  (STDOUT, buffer, nrecvd);
+    write  (STDOUT, client->env, nrecvd);
     fprintf(stdout, "\n");
-    return client;
+    return;
 }
 
 
@@ -59,15 +60,13 @@ int main(int argc, char *argv[]) {
     if ((err = tcp_bind(sock, &addr)) != NO_ERROR) return err;
     if ((err = tcp_listen(sock, 5))   != NO_ERROR) return err;
 
-    SOCKET b_clients[MAX_CLIENTS] = { 0 };
-    SOCKET b_clients_swp[MAX_CLIENTS] = { 0 };
+    client_t b_clients[MAX_CLIENTS];
+    client_t b_clients_swp[MAX_CLIENTS];
 
-    SOCKET *clients = b_clients;
-    SOCKET *clients_swp = b_clients_swp;
+    client_t *clients = b_clients;
+    client_t *clients_swp = b_clients_swp;
 
     int    nclients = 0;
-
-    char   buffer[512];
 
     for (;;) {
 
@@ -76,29 +75,31 @@ int main(int argc, char *argv[]) {
             if (accepted != INVALID_SOCKET) {
                 printf("Accepted %d\n", (int) accepted);
                 tcp_set_non_blocking(accepted, true);
-                clients[nclients++] = accepted;
+                clients[nclients++] = c_create(accepted, BUFFER_SIZE);
             }
         }
 
         int nalive = 0;
         for (int i = 0; i < nclients; ++i) {
-            SOCKET client = clients[i];
-            if (INVALID_SOCKET == client)
+            client_t client = clients[i];
+            if (INVALID_SOCKET == client.socket)
                 continue;
 
-            if (INVALID_SOCKET != handle_client(client, buffer)) {
+            handle_client(&client);
+
+            if (INVALID_SOCKET != client.socket) {
                 clients_swp[nalive++] = client;
             }
         }
         nclients = nalive;
 
-        SOCKET * t  = clients;
+        client_t *t = clients;
         clients     = clients_swp;
         clients_swp = t;
     }
 
     for (int i = 0; i < nclients; i++) {
-        close(clients[i]);
+        c_free(&clients[i]);
     }
     close(sock);
     cleanup();
