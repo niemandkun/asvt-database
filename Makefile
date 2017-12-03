@@ -13,8 +13,11 @@ map: src/map.c build
 main: src/main.c build
 	$(CC) -c src/main.c -o build/main.o
 
-app: map main
-	$(CC) build/map.o build/main.o -o app
+api: src/api.c build
+	$(CC) -c src/api.c -o build/api.o
+
+app: map main api
+	$(CC) build/map.o build/main.o build/api.o -o app
 
 clean:
 	rm -rf build

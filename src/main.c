@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "map.h"
+#include "api.h"
 
 #define MAX_INPUT 1024
 #define MAX_TOKENS 3
@@ -58,6 +59,24 @@ size_t split_by_spaces(char* source, size_t source_size,
     }
 
     return dest_size;
+}
+
+char *convert_to_command(size_t argc, char** argv) {
+    Command *command = cmd_init(argc, argv);
+
+    if (command == NULL) {
+        return NULL;
+    }
+
+    char *payload = (char *)command;
+
+    for (size_t i = 0, n = cmd_size(command); i < n; ++i) {
+        printf("%02X ", payload[i]);
+    }
+
+    printf("\n");
+
+    return payload;
 }
 
 int perform_command(Map *map, size_t argc, char** argv) {
@@ -144,6 +163,8 @@ int main(void) {
         }
 
         size_t tokens_count = split_by_spaces(input, input_size, tokens, MAX_TOKENS);
+
+        convert_to_command(tokens_count, tokens);
 
         if (perform_command(map, tokens_count, tokens) != NOERROR) {
             printf("Error!\n");
