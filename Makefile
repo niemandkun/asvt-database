@@ -1,41 +1,38 @@
-CFLAGS=-Wall -Wextra -Werror -pedantic -std=c99 -I./include/
+BUILD_DIR       := build
+SRC_DIR         := src
+INCLUDE_DIR     := include
 
-CC=gcc $(CFLAGS)
+APP             := app
+APP_DEPS        := map.o api.o main.o
+
+SERVER          := server
+SERVER_DEPS     := socklib.o server.o
+
+CFLAGS          := -Wall -Wextra -Werror -pedantic -std=c99
+IFLAGS          := -I./$(INCLUDE_DIR)/
+CC              := gcc $(CFLAGS) $(IFLAGS)
 
 ifeq ($(OS),Windows_NT)
-    LINKS =-lws2_32
+    LFLAGS      := -lws2_32
 endif
 
-default: app
+all: $(APP) $(SERVER)
 
-build:
-	mkdir build
+$(APP): $(addprefix $(BUILD_DIR)/,$(APP_DEPS))
+	$(CC) $^ -o $(APP) $(LFLAGS)
 
-map: src/map.c build
-	$(CC) -c src/map.c -o build/map.o
+$(SERVER): $(addprefix $(BUILD_DIR)/,$(SERVER_DEPS))
+	$(CC) $^ -o $(SERVER) $(LFLAGS)
 
-main: src/main.c build
-	$(CC) -c src/main.c -o build/main.o
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(BUILD_DIR)
+	$(CC) -c $< -o $@ $(LFLAGS)
 
-api: src/api.c build
-	$(CC) -c src/api.c -o build/api.o ${LINKS}
+$(BUILD_DIR):
+	mkdir -p $@
 
-socklib: src/socklib.c build
-	$(CC) -c src/socklib.c -o build/socklib.o ${LINKS}
-
-server: src/server.c build
-	$(CC) -c src/server.c -o build/server.o ${LINKS}
-
-srv-test: server socklib
-	$(CC) build/server.o build/socklib.o -o server ${LINKS}
-
-app: map main api
-	$(CC) build/map.o build/main.o build/api.o -o app ${LINKS}
-
-
-
-server: 
+.PHONY: clean
 
 clean:
-	rm -rf build
-	rm -f app
+	rm -rf $(BUILD_DIR)
+	rm -f $(APP)
+	rm -f $(SERVER)
