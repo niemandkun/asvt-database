@@ -132,12 +132,12 @@ void map_remove(Map *map, char *key) {
 
     map->entries[j].key = NULL;
     map->entries[j].value = NULL;
-
-    map->count--;
 }
 
 void map_print(Map *map) {
-    printf("Map {\n    size=%lu,\n    count=%lu,\n    entries=[\n", map->size, map->count);
+    long unsigned int map_size = (long unsigned int) map->size;
+    long unsigned int map_count = (long unsigned int) map->count;
+    printf("Map {\n    size=%lu,\n    count=%lu,\n    entries=[\n", map_size, map_count);
 
     for (size_t i = 0; i < map->count; ++i) {
         Entry *entry = &map->entries[i];
