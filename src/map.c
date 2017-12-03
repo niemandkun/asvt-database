@@ -132,6 +132,8 @@ void map_remove(Map *map, char *key) {
 
     map->entries[j].key = NULL;
     map->entries[j].value = NULL;
+
+    map->count--;
 }
 
 void map_print(Map *map) {
