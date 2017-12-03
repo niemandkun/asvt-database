@@ -142,7 +142,8 @@ int perform_command(Map *map, size_t argc, char** argv) {
         if (argc != 1) {
             return ERRCODE;
         }
-        printf("%lu\n", map->count);
+        long unsigned int map_count = (long unsigned int) map->count;
+        printf("%lu\n", map_count);
         return NOERROR;
     }
 

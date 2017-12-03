@@ -1,6 +1,12 @@
 #include <stdlib.h>
 #include <string.h>
+
+#if _WIN32
+#include <winsock2.h>
+#else
 #include <arpa/inet.h>
+#endif
+
 #include "api.h"
 
 Command *cmd_init(int argc, char **argv) {
