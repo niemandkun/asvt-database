@@ -9,7 +9,7 @@
 #include "socklib.h"
 
 
-int startup() {
+int socklib_startup() {
   #ifdef _WIN32
     WSADATA WSAData;
     int errcode = WSAStartup(MAKEWORD(2, 2), &WSAData);
@@ -21,7 +21,7 @@ int startup() {
     return 0;
 }
 
-void cleanup() {
+void socklib_cleanup() {
   #ifdef _WIN32
     WSACleanup();
   #endif

@@ -7,9 +7,9 @@
 #include "sockheaders.h"
 
 
-int startup();
+int socklib_startup();
 
-void cleanup();
+void socklib_cleanup();
 
 int get_last_error();
 

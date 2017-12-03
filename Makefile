@@ -2,8 +2,8 @@ BUILD_DIR       := build
 SRC_DIR         := src
 INCLUDE_DIR     := include
 
-APP             := app
-APP_DEPS        := map.o api.o main.o
+CLIENT          := client
+CLIENT_DEPS     := socklib.o api.o utils.o client.o
 
 SERVER          := server
 SERVER_DEPS     := socklib.o server.o
@@ -18,10 +18,10 @@ LFLAGS          := -lws2_32
 
 endif
 
-all: $(APP) $(SERVER)
+all: $(CLIENT) $(SERVER)
 
-$(APP): $(addprefix $(BUILD_DIR)/,$(APP_DEPS))
-	$(CC) $^ -o $(APP) $(LFLAGS)
+$(CLIENT): $(addprefix $(BUILD_DIR)/,$(CLIENT_DEPS))
+	$(CC) $^ -o $(CLIENT) $(LFLAGS)
 
 $(SERVER): $(addprefix $(BUILD_DIR)/,$(SERVER_DEPS))
 	$(CC) $^ -o $(SERVER) $(LFLAGS)
@@ -36,5 +36,5 @@ $(BUILD_DIR):
 
 clean:
 	rm -rf $(BUILD_DIR)
-	rm -f $(APP)
+	rm -f $(CLIENT)
 	rm -f $(SERVER)

@@ -37,17 +37,17 @@ SOCKET handle_client(SOCKET client, char* buffer) {
 }
 
 
-int main(int argc, char *argv[]) { 
+int main(int argc, char *argv[]) {
 
-    if (argc != 3) {
-        printf("Usage: %s host port\n", argv[0]);
+    if (argc != 2) {
+        printf("Usage: %s PORT\n", argv[0]);
         return 1;
     }
 
-    char *host = argv[1];
-    int   port = atoi(argv[2]);
+    char *host = "0.0.0.0";
+    int   port = atoi(argv[1]);
 
-    startup();
+    socklib_startup();
 
     SOCKET sock = tcp_socket();
     struct sockaddr_in addr;
@@ -101,6 +101,6 @@ int main(int argc, char *argv[]) {
         close(clients[i]);
     }
     close(sock);
-    cleanup();
+    socklib_cleanup();
     return 0;
 }
