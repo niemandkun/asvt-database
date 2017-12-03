@@ -13,7 +13,9 @@ IFLAGS          := -I./$(INCLUDE_DIR)/
 CC              := gcc $(CFLAGS) $(IFLAGS)
 
 ifeq ($(OS),Windows_NT)
-    LFLAGS      := -lws2_32
+
+LFLAGS          := -lws2_32
+
 endif
 
 all: $(APP) $(SERVER)
