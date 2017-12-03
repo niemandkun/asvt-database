@@ -26,8 +26,11 @@ socklib: src/socklib.c build
 server: src/server.c build
 	$(CC) -c src/server.c -o build/server.o ${LINKS}
 
-srv-test: server socklib
-	$(CC) build/server.o build/socklib.o -o server ${LINKS}
+client: src/client.c build
+	$(CC) -c src/client.c -o build/client.o ${LINKS}
+
+srv-test: server client socklib
+	$(CC) build/server.o build/socklib.o build/client.o -o server ${LINKS}
 
 app: map main api
 	$(CC) build/map.o build/main.o build/api.o -o app ${LINKS}
