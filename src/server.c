@@ -29,6 +29,10 @@ SOCKET handle_client(SOCKET client, char* buffer) {
         return INVALID_SOCKET;
     }
 
+    // FIXME
+    char retval[] = {0, 2, 0, 0, 0, 2, 'h', 'a', 0, 0, 0, 3, 'k', 'e', 'k'};
+    tcp_send(client, retval, 15);
+
     fprintf(stdout, "%d: ", (int) client);
     fflush (stdout);
     write  (STDOUT, buffer, nrecvd);

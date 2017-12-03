@@ -1,30 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include "api.h"
 #include "socklib.h"
 #include "utils.h"
 
-#define MAX_INPUT 1024
-#define MAX_FILE 1024
-#define MAX_OUTPUT 1024
+#define STDOUT 1
+
+#define INPUT_BUFFER_SIZE 1024
+#define FILE_BUFFER_SIZE 1024
+#define NETWORK_BUFFER_SIZE 1024
 #define MAX_TOKENS 4
 
 #define ERRCODE -1
 #define NOERROR 0
 
 char **tokens;
-char *input;
-char *output;
+char *input_buffer;
+char *network_buffer;
 
 SOCKET sock;
 
 size_t getinput() {
-    fgets(input, MAX_INPUT, stdin);
-    int len = strlen(input);
+    fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+    int len = strlen(input_buffer);
 
-    if (len > 0 && input[len - 1] == '\n') {
-        input[len - 1] = '\0';
+    if (len > 0 && input_buffer[len - 1] == '\n') {
+        input_buffer[len - 1] = '\0';
         return len - 1;
     }
 
@@ -63,6 +66,19 @@ int perform_remotely(size_t argc, char **argv) {
         return ERRCODE;
     }
 
+    tcp_recv(sock, network_buffer, NETWORK_BUFFER_SIZE);
+
+    Command *from_server = (Command *)network_buffer;
+    char *idx = from_server->fields;
+
+    for (int i = 0; i < from_server->nfields; ++i) {
+        Field *field = (Field *) idx;
+        int field_len = ntohl(field->length);
+        write(STDOUT, field->data, field_len);
+        printf("\n");
+        idx += field_len + sizeof(Field);
+    }
+
     return NOERROR;
 }
 
@@ -98,12 +114,12 @@ int perform_locally(size_t argc, char** argv) {
             return ERRCODE;
         }
 
-        char *content = malloc(MAX_FILE);
+        char *content = malloc(FILE_BUFFER_SIZE);
         if (content == NULL) {
             return ERRCODE;
         }
 
-        read(file, content, MAX_FILE);
+        read(file, content, FILE_BUFFER_SIZE);
         close(file);
 
         char *fake_argv[3];
@@ -131,16 +147,16 @@ SOCKET init_socket(char* host, uint16_t port) {
 void init(char **argv) {
     sock = init_socket(argv[1], atoi(argv[2]));
     tokens = calloc(MAX_TOKENS, sizeof(char *));
-    input = malloc(MAX_INPUT);
-    output = malloc(MAX_OUTPUT);
+    input_buffer = malloc(INPUT_BUFFER_SIZE);
+    network_buffer = malloc(NETWORK_BUFFER_SIZE);
 }
 
 void cleanup() {
     close(sock);
     socklib_cleanup();
     free(tokens);
-    free(input);
-    free(output);
+    free(input_buffer);
+    free(network_buffer);
 }
 
 int main(int argc, char** argv) {
@@ -152,14 +168,14 @@ int main(int argc, char** argv) {
     init(argv);
 
     while (1) {
-        size_t input_size = getinput(input, MAX_INPUT);
+        size_t input_size = getinput(input_buffer, INPUT_BUFFER_SIZE);
 
         if (input_size == 0) {
             continue;
         }
 
         size_t ntokens =
-            split_by_spaces(input, input_size, tokens, MAX_TOKENS);
+            split_by_spaces(input_buffer, input_size, tokens, MAX_TOKENS);
 
         if (perform_locally(ntokens, tokens) == NOERROR) {
             continue;
