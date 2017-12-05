@@ -11,7 +11,7 @@
 
 typedef struct field {
     int32_t length; // Network byte order! Use ntohl to read this field.
-    char data[];
+    int8_t data[];
 } Field;
 
 typedef struct command {
