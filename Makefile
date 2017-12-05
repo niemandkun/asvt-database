@@ -6,7 +6,7 @@ CLIENT          := client
 CLIENT_DEPS     := socklib.o api.o utils.o client.o
 
 SERVER          := server
-SERVER_DEPS     := socklib.o server.o map.o
+SERVER_DEPS     := socklib.o server.o map.o api.o
 
 CFLAGS          := -Wall -Wextra -Werror -pedantic -std=c99
 IFLAGS          := -I./$(INCLUDE_DIR)/

@@ -60,7 +60,7 @@ Command *eval_cmd(Command *cmd, Map *map) {
 
         for (size_t i = 0; i < map->count; ++i) {
         // 1: 0 | 1: fields num | 4: first len | N: first bytes | ... |
-            Entry *entry = &map->entries[i];
+            entry = &map->entries[i];
 
             field = (Field *)idx;
 
@@ -68,6 +68,8 @@ Command *eval_cmd(Command *cmd, Map *map) {
             int value_len = strlen(entry->value);
             int field_len = key_len + value_len + 1;
             field->length = htonl(field_len);
+
+            printf("field len: %d\n", field_len);
 
             idx = (char *)field->data;
             memcpy(idx, entry->key, key_len);
@@ -80,6 +82,7 @@ Command *eval_cmd(Command *cmd, Map *map) {
 
             idx += value_len;
         }
+
         free(err_allocated);
         free(ok_allocated);
         return result;
@@ -229,9 +232,24 @@ SOCKET handle_client(SOCKET client, char* buffer, Map *map) {
     }
 
     Command *cmd = (Command *)buffer;
+
+    printf("Command comes to server:\n");
+    char *payload = (char *)cmd;
+    for (size_t i = 0, n = cmd_size(cmd); i < n; ++i) {
+        printf("%02X ", payload[i]);
+    }
+    printf("\n");
+
     Command *ret = eval_cmd(cmd, map);
 
-    tcp_send(client, ret, 15);
+    printf("Command comes to client:\n");
+    payload = (char *)ret;
+    for (size_t i = 0, n = cmd_size(ret); i < n; ++i) {
+        printf("%02X ", payload[i]);
+    }
+    printf("\n");
+
+    tcp_send(client, ret, cmd_size(ret));
 
     free(ret);
 
@@ -273,7 +291,7 @@ int main(int argc, char *argv[]) {
 
     int    nclients = 0;
 
-    char   buffer[512];
+    char   buffer[512000];
 
     Map *map = map_init(1);
 

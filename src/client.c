@@ -41,14 +41,6 @@ Command *convert_to_command(size_t argc, char** argv) {
         return NULL;
     }
 
-    char *payload = (char *)command;
-
-    for (size_t i = 0, n = cmd_size(command); i < n; ++i) {
-        printf("%02X ", payload[i]);
-    }
-
-    printf("\n");
-
     return command;
 }
 
@@ -68,8 +60,8 @@ int perform_remotely(size_t argc, char **argv) {
 
     tcp_recv(sock, network_buffer, NETWORK_BUFFER_SIZE);
 
-    // hmm
     Command *from_server = (Command *)network_buffer;
+
     char *idx = from_server->fields;
 
     for (int i = 0; i < from_server->nfields; ++i) {
