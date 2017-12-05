@@ -49,6 +49,7 @@ int map_resize(Map *map, size_t size) {
 }
 
 static int has_key(Entry *entry, char *key) {
+    printf("has_key(): entry->key: '%s' key: '%s'\n", entry->key, key);
     return entry-> key != NULL
         && (entry->key == key || strcmp(key, entry->key) == 0);
 }
@@ -64,8 +65,10 @@ static int find_entry_by_key(Entry *entries, size_t count, char *key) {
 
 static int map_replace(Map *map, char *key, char *value) {
     int i = find_entry_by_key(map->entries, map->count, key);
+    printf("map_replace(): found %s at %d\n", key, i);
     if (i >= 0) {
         Entry *entry = &map->entries[i];
+        printf("map_replace(): entry addr == %p\n", (void *)entry);
         entry->value = value;
         return NOERROR;
     }
@@ -81,6 +84,7 @@ static int map_put_new(Map *map, char *key, char *value) {
     }
 
     Entry *entry = &map->entries[map->count++];
+    printf("put_new(): entry == %p \n", (void *)entry);
 
     entry->key = key;
     entry->value = value;
@@ -122,12 +126,14 @@ void map_remove(Map *map, char *key) {
 
     Entry *entry = &map->entries[i];
 
+    printf("key: '%s', value: '%s'\n", entry->key, entry->value);
+
     free(entry->key);
     free(entry->value);
 
     size_t j = i;
 
-    while (j < map->count) {
+    while (j < map->count - 1) {
         map->entries[j] = map->entries[j + 1];
         j++;
     }
@@ -150,3 +156,19 @@ void map_print(Map *map) {
 
     printf("    ],\n}\n");
 }
+
+// char *map_list(Map *map) {
+//     long unsigned int map_size = (long unsigned int) map->size;
+//     long unsigned int map_count = (long unsigned int) map->count;
+//     char *result = "";
+//
+//     for (size_t i = 0; i < map->count; ++i) {
+//         Entry *entry = &map->entries[i];
+//         result = strcat(result, entry->key);
+//         result = strcat(result, " ");
+//         result = strcat(result, entry->value);
+//         result = strcat(result, "\n");
+//     }
+//
+//     return result;
+// }
